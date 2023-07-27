@@ -14,7 +14,6 @@ export default async ({ firstName, lastName, email, password, userName }: NewUse
     const newUser = new User()
     newUser.firstName = firstName
     newUser.lastName = lastName
-    newUser.userName = userName
     newUser.email = email
     newUser.password = await newUser.encryptPassword(password)
     await newUser.save().catch((error)=> {

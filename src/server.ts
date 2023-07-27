@@ -1,9 +1,8 @@
-import app from "./app/app";
+import 'dotenv/config';
 import http from 'http';
+import jwt from "jsonwebtoken";
 import { Server, Socket } from "socket.io";
-import 'dotenv/config'
-import { TokenValidation } from "./middleware/verifyToken";
-import jwt from "jsonwebtoken"
+import app from "./app/app";
 
 const PORT = process.env.PORT;
 const server = http.createServer(app);
@@ -52,7 +51,7 @@ io.on('connection', (socket: Socket) => {
 
   // Add more event handlers as needed
   socket.on('sendMessage', (companyId: string, message: string) => {
-    // Handle incoming messages and broadcast to the room
+    // Handle incoming messages and broadcast to the company
     socket.to(companyId).emit('message', { companyId, message, username: socket.id });
   });
 

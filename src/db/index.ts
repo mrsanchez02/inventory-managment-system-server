@@ -1,9 +1,7 @@
 import {DataSource} from 'typeorm'
 import 'dotenv/config'
 import { User } from '../entities/User.entity'
-import { Room } from '../entities/Room.entity'
-import { Message } from '../entities/Message.entity'
-import { UserRoom } from '../entities/UserRoom.entity'
+import { Company } from '../entities/Company.entity'
 
 export const AppDataSource = new DataSource({
   type: "postgres",
@@ -14,7 +12,7 @@ export const AppDataSource = new DataSource({
   database: process.env.POSTGRES_DB,
   synchronize: false,
   logging: true,
-  entities: [User, Room, Message, UserRoom],
+  entities: [User, Company],
   subscribers: ['src/migrations/**/*.ts'],
   migrations: ['src/migrations/**/*.ts'],
 })

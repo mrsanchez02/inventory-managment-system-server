@@ -8,20 +8,21 @@ import { In } from 'typeorm'
 import restoreOneService from '../services/user/restore-one.service'
 
 export const registerNewUser = async (req: Request, res: Response) => {
-  const { email, userName } = req.body
+  const { email } = req.body
 
   try {
-    const { error, user } = await getOneService({ where: { email, userName }, withDeleted: true })
-    if (user) return res.status(409).json({ error: { message: 'This username or email already exist.' } })
+    const { error, user } = await getOneService({ where: { email }, withDeleted: true })
+    if (user) return res.status(409).json({ error: { message: 'This email already exist.' } })
 
     const createUser = await createOneService(req.body)
     if (error || !createUser) return res.status(500).json({ message: 'Error service.' })
-
-    const token = tokenSign(createUser.newUser?.id || '', '1h')
-    res.cookie("token", token, {
-      httpOnly: true,
-      maxAge: 1000 * 60 * 60
-    }).status(201).json({ msg: "User created succesfully" })
+    if (createUser.newUser) {
+      const token = tokenSign(createUser.newUser.uuid || '', '1h')
+      res.cookie("token", token, {
+        httpOnly: true,
+        maxAge: 1000 * 60 * 60
+      }).status(201).json({ msg: "User created succesfully" })
+    }
 
   } catch (error) {
     console.log(error)
@@ -34,12 +35,12 @@ export const LoginUser = async (req: Request, res: Response) => {
   const { email, password } = req.body
 
   try {
-    const { error, user } = await getOneService({ where: { email }, select: ['password', 'id'] })
+    const { error, user } = await getOneService({ where: { email }, select: ['password', 'uuid'] })
     if (error || !user) return res.status(404).json({ message: 'Wrong email or password.' })
 
     const rightPassword: boolean = await user.validatePassword(password)
     if (!rightPassword) return res.status(404).json({ message: 'Wrong email or password.' })
-    const token = tokenSign(user.id, 1000 * 60 * 60)
+    const token = tokenSign(user.uuid, 1000 * 60 * 60)
     res.cookie("token", token, {
       httpOnly: true,
     }).status(200).json({ info: { message: "Login succesfully" } })
@@ -55,7 +56,7 @@ export const LoginUser = async (req: Request, res: Response) => {
 export const profile = async (req: Request, res: Response) => {
   try {
     if (!req.userId) throw new Error("Application error.");
-    const { error, user } = await getOneService({ where: { id: req.userId } })
+    const { error, user } = await getOneService({ where: { uuid: req.userId } })
     console.log(user)
     if (error) return res.status(404).json({ error: { message: "User doesn't exist!" } })
     res.json({ user })
@@ -108,14 +109,14 @@ export const removeUser = async (req: Request, res: Response) => {
 
 export const recoverUser = async (req: Request, res: Response) => {
   const { userToRestore } = req.body
-  
+
   try {
-    const { error, user } = await getOneService({ where: { id: req.userId, role: In(['admin', 'superadmin']) } })
+    const { error, user } = await getOneService({ where: { uuid: req.userId, role: In(['admin', 'superadmin']) } })
     if (error || !user) return res.status(401).json({ error: { message: 'Unauthorized!' } })
-    
+
     const restoredUser = await restoreOneService(userToRestore)
-    if(restoredUser.error) return res.status(400).json({error:{message: restoredUser.error.message}})
-    
+    if (restoredUser.error) return res.status(400).json({ error: { message: restoredUser.error.message } })
+
     res.status(201).json(restoredUser.info)
 
   } catch (error) {
@@ -123,5 +124,5 @@ export const recoverUser = async (req: Request, res: Response) => {
     res.status(500).json({ error: { message: 'Application error.' } })
 
   }
-  
+
 }
