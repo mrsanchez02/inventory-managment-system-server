@@ -1,0 +1,10 @@
+# Folders
+node_modules
+dist
+pgadmin-data
+postgres-data
+
+# Files
+package-lock.*
+.env*
+*-migration.ts
